@@ -34,7 +34,7 @@ async function getById(req, res) {
 }
 
 async function create(req, res) {
-  const { title, description, area_id, category_id } = req.body
+  const { title, description, area_id, category_id, priority } = req.body
   if (!title || !area_id) return res.status(400).json({ error: 'Título y área son requeridos' })
 
   const userId = req.session.userId
@@ -43,7 +43,7 @@ async function create(req, res) {
     const result = await pool.query(
       `INSERT INTO requests (title, description, status, user_id, area_id, category_id)
        VALUES ($1, $2, 'pending', $3, $4, $5) RETURNING *`,
-      [title, description, userId, area_id, category_id || null]
+      [title, description, userId, area_id, category_id || null, priority || 'normal']
     )
     res.status(201).json(result.rows[0])
   } catch (err) {
@@ -52,7 +52,7 @@ async function create(req, res) {
 }
 
 async function update(req, res) {
-  const { title, description, status, area_id, category_id } = req.body
+  const { title, description, status, area_id, category_id, priority} = req.body
 
   try {
     const current = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id])
@@ -68,6 +68,7 @@ async function update(req, res) {
         status ?? current.rows[0].status,
         area_id ?? current.rows[0].area_id,
         category_id ?? current.rows[0].category_id,
+        priority ?? current.rows[0].priority,
         req.params.id,
       ]
     )
